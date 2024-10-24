@@ -1,4 +1,4 @@
-let quotes = [
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   {
     text: "Happiness is not something ready-made. It comes from your own actions.",
     category: "Happiness",
@@ -12,12 +12,14 @@ let quotes = [
     category: "Wisdom",
   },
 ];
-
+function saveQuotes() {
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+}
 function showRandomQuote() {
   let  randomIndex = Math.floor(Math.random() * quotes.length);
   let randomQuote = quotes[randomIndex];
  let quoteDisplay = document.getElementById("quoteDisplay");
-
+ sessionStorage.setItem("lastViewedQuote", JSON.stringify(randomQuote));
    quoteDisplay.innerHTML = `"${randomQuote.text}" <br> <em>- Category: ${randomQuote.category}</em>`;
 }
 
@@ -57,14 +59,53 @@ function addQuote() {
   }
 
    quotes.push({ text: newQuoteText, category: newQuoteCategory });
-
+  saveQuotes();
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
   showRandomQuote();
 }
+function exportToJsonFile() {
+  let dataStr = JSON.stringify(quotes, null, 2);
+ let dataBlob = new Blob([dataStr], { type: "application/json" });
+  let url = URL.createObjectURL(dataBlob);
+
+ let downloadLink = document.createElement("a");
+  downloadLink.href = url;
+  downloadLink.download = "quotes.json";
+  downloadLink.click();
+
+  URL.revokeObjectURL(url);
+}
+function importFromJsonFile(event) {
+  let fileReader = new FileReader();
+  fileReader.onload = function (e) {
+    try {
+      let importedQuotes = JSON.parse(e.target.result);
+      if (Array.isArray(importedQuotes)) {
+        quotes.push(...importedQuotes);
+        saveQuotes();
+        alert("Quotes imported successfully!");
+      } else {
+        alert("Invalid JSON format. Please provide an array of quotes.");
+      }
+    } catch (error) {
+      alert("Error reading the JSON file.");
+    }
+  };
+  fileReader.readAsText(event.target.files[0]);
+}
 
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
+function loadLastViewedQuote() {
+  let lastViewedQuote = JSON.parse(sessionStorage.getItem("lastViewedQuote"));
+  if (lastViewedQuote) {
+   let quoteDisplay = document.getElementById("quoteDisplay");
+    quoteDisplay.innerHTML = `"${lastViewedQuote.text}" <br> <em>- Category: ${lastViewedQuote.category}</em>`;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  showRandomQuote();     
-  createAddQuoteForm();   
+  loadLastViewedQuote(); 
+  createAddQuoteForm(); 
 });
