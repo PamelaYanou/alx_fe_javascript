@@ -14,33 +14,57 @@ let quotes = [
 ];
 
 function showRandomQuote() {
- let randomIndex = Math.floor(Math.random() * quotes.length);
+  let  randomIndex = Math.floor(Math.random() * quotes.length);
   let randomQuote = quotes[randomIndex];
-  let quoteDisplay = document.getElementById("quoteDisplay");
+ let quoteDisplay = document.getElementById("quoteDisplay");
 
-   quoteDisplay.innerHTML = `<p>"${randomQuote.text}"</p><p><em>- Category: ${randomQuote.category}</em></p>`;
+   quoteDisplay.innerHTML = `"${randomQuote.text}" <br> <em>- Category: ${randomQuote.category}</em>`;
 }
 
+function createAddQuoteForm() {
+   let form = document.createElement("form");
+  form.id = "createAddQuoteForm";
+
+  let inputText = document.createElement("input");
+  inputText.type = "text";
+  inputText.id = "newQuoteText";
+  inputText.placeholder = "Enter a new quote";
+
+let inputCategory = document.createElement("input");
+  inputCategory.type = "text";
+  inputCategory.id = "newQuoteCategory";
+  inputCategory.placeholder = "Enter quote category";
+
+  let addButton = document.createElement("button");
+  addButton.type = "button";
+  addButton.textContent = "Add Quote";
+  addButton.onclick = addQuote; 
+
+  form.appendChild(inputText);
+  form.appendChild(inputCategory);
+  form.appendChild(addButton);
+ 
+  document.body.appendChild(form);
+}
 
 function addQuote() {
   let newQuoteText = document.getElementById("newQuoteText").value.trim();
-  let newQuoteCategory = document
-    .getElementById("newQuoteCategory")
-    .value.trim();
+  let newQuoteCategory = document.getElementById("newQuoteCategory").value.trim();
 
-  if (newQuoteText === "" || newQuoteCategory === "") {
-    alert("Please enter both a quote and a category.");
+   if (newQuoteText === "" || newQuoteCategory === "") {
+    alert("Please enter both the quote and its category.");
     return;
   }
 
-   let newQuote = { text: newQuoteText, category: newQuoteCategory };
-  quotes.push(newQuote);
+   quotes.push({ text: newQuoteText, category: newQuoteCategory });
 
-    document.getElementById("newQuoteText").value = "";
+  document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
-
-   showRandomQuote();
+  showRandomQuote();
 }
 
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
-document.addEventListener("DOMContentLoaded", showRandomQuote);
+document.addEventListener("DOMContentLoaded", () => {
+  showRandomQuote();     
+  createAddQuoteForm();   
+});
