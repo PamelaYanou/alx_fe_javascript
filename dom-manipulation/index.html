@@ -20,20 +20,14 @@
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
     <button onclick="exportToJsonFile()">Export Quotes as JSON</button>
   </div>
+<form>
+<input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+<input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+<button onclick="addQuote(document.getElementById('newQuoteText').value, document.getElementById('newQuoteCategory').value)">
+  Add and Sync Quote
+</button>
 
-  <style>
-  .notification {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #264070;
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-  }
-</style>
+</form>
   <script src="script.js"></script>
 </body>
 </html>
