@@ -14,54 +14,42 @@ let quotes = JSON.parse(localStorage.getItem("quotes")) || [
     category: "Wisdom",
   },
 ];
-async function fetchQuotesFromServer() {
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadQuotesFromLocalStorage();
+  syncQuotes(); 
+});
+
+async function syncQuotes() {
   try {
-   let response = await fetch(SERVER_URL);
+    let response = await fetch(SERVER_URL);
     if (!response.ok) throw new Error("Failed to fetch quotes from server");
-
     let serverQuotes = await response.json();
-    resolveConflicts(serverQuotes); 
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-}
+    resolveConflicts(serverQuotes);
 
-async function postQuoteToServer(quote) {
-  try {
-    let response = await fetch(SERVER_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(quote)
+      quotes.forEach((quote) => {
+      if (!quote.synced) {
+        postQuoteToServer(quote);
+        quote.synced = true; 
+      }
     });
-    if (!response.ok) throw new Error("Failed to post quote");
-
-    console.log("Quote posted successfully:", await response.json());
+        
+    localStorage.setItem("quotes", JSON.stringify(quotes));
   } catch (error) {
-    console.error("Error posting data:", error);
+    console.error("Error during sync:", error);
   }
 }
-
-function addQuote(text, category) {
- let newQuote = { text, category };
-  quotes.push(newQuote);
-  localStorage.setItem("quotes", JSON.stringify(quotes));
-  postQuoteToServer(newQuote);
-}
-setInterval(fetchQuotesFromServer, 60000);
-
 
 function resolveConflicts(serverQuotes) {
   let updated = false;
-  serverQuotes.forEach(serverQuote => {
-  let localQuote = quotes.find(q => q.text === serverQuote.text);
+  serverQuotes.forEach((serverQuote) => {
+  let localQuote = quotes.find((q) => q.text === serverQuote.text);
 
     if (!localQuote) {
-      quotes.push(serverQuote);
+    quotes.push({ ...serverQuote, synced: true });
       updated = true;
     } else if (localQuote.category !== serverQuote.category) {
-      localQuote.category = serverQuote.category;
+     localQuote.category = serverQuote.category;
       updated = true;
     }
   });
@@ -72,6 +60,45 @@ function resolveConflicts(serverQuotes) {
   }
 }
 
+async function postQuoteToServer(quote) {
+  try {
+    let response = await fetch(SERVER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(quote),
+    });
+
+    if (!response.ok) throw new Error("Failed to post quote to server");
+    console.log("Quote posted successfully:", await response.json());
+  } catch (error) {
+    console.error("Error posting quote:", error);
+  }
+}
+
+function addQuote(text, category) {
+  let newQuote = { text, category, synced: false };
+  quotes.push(newQuote);
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+  syncQuotes(); 
+}
+
 function displayNotification(message) {
   alert(message); 
 }
+
+function loadQuotesFromLocalStorage() {
+  quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+  quotes.forEach((quote) => displayQuote(quote));
+}
+
+function displayQuote(quote) {
+  let quoteDisplay = document.getElementById("quoteDisplay");
+ let quoteElement = document.createElement("p");
+  quoteElement.textContent = `"${quote.text}" - ${quote.category}`;
+  quoteDisplay.appendChild(quoteElement);
+}
+
+setInterval(syncQuotes, 60000);
+
