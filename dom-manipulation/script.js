@@ -15,90 +15,46 @@ let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   },
 ];
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadQuotesFromLocalStorage();
-  syncQuotes(); 
-});
-
-async function syncQuotes() {
-  try {
-    let response = await fetch(SERVER_URL);
-    if (!response.ok) throw new Error("Failed to fetch quotes from server");
-    let serverQuotes = await response.json();
-    resolveConflicts(serverQuotes);
-
-      quotes.forEach((quote) => {
-      if (!quote.synced) {
-        postQuoteToServer(quote);
-        quote.synced = true; 
-      }
-    });
-        
-    localStorage.setItem("quotes", JSON.stringify(quotes));
-  } catch (error) {
-    console.error("Error during sync:", error);
-  }
-}
-
-function resolveConflicts(serverQuotes) {
-  let updated = false;
-  serverQuotes.forEach((serverQuote) => {
-  let localQuote = quotes.find((q) => q.text === serverQuote.text);
-
-    if (!localQuote) {
-    quotes.push({ ...serverQuote, synced: true });
-      updated = true;
-    } else if (localQuote.category !== serverQuote.category) {
-     localQuote.category = serverQuote.category;
-      updated = true;
-    }
-  });
-
-  if (updated) {
-    localStorage.setItem("quotes", JSON.stringify(quotes));
-    displayNotification("Quotes have been updated based on server data.");
-  }
-}
-
 async function postQuoteToServer(quote) {
   try {
-    let response = await fetch(SERVER_URL, {
-      method: "POST",
+    let response = await fetch(POST_SERVER_URL, {
+      method: "POST", 
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json" 
       },
-      body: JSON.stringify(quote),
+      body: JSON.stringify(quote) 
     });
 
-    if (!response.ok) throw new Error("Failed to post quote to server");
-    console.log("Quote posted successfully:", await response.json());
+    if (!response.ok) {
+      throw new Error("Failed to post quote to the server");
+    }
+
+    let serverResponse = await response.json();
+    console.log("Quote posted successfully:", serverResponse);
+
+    
+    displayNotification("Quote successfully posted to server.");
   } catch (error) {
-    console.error("Error posting quote:", error);
+    console.error("Error posting quote to server:", error);
+    displayNotification("Failed to post quote to server.");
   }
 }
 
-function addQuote(text, category) {
-  let newQuote = { text, category, synced: false };
+
+function addQuoteAndPost(text, category) {
+  let newQuote = { text, category };  
   quotes.push(newQuote);
-  localStorage.setItem("quotes", JSON.stringify(quotes));
-  syncQuotes(); 
+  saveQuotes(); 
+  postQuoteToServer(newQuote);
+  displayQuote(newQuote);
 }
 
-function displayNotification(message) {
-  alert(message); 
-}
+document.getElementById("addQuoteButton").addEventListener("click", () => {
+  let text = document.getElementById("newQuoteText").value;
+  let category = document.getElementById("newQuoteCategory").value;
+  if (text && category) {
+  addQuoteAndPost(text, category);
+  }
+});
 
-function loadQuotesFromLocalStorage() {
-  quotes = JSON.parse(localStorage.getItem("quotes")) || [];
-  quotes.forEach((quote) => displayQuote(quote));
-}
-
-function displayQuote(quote) {
-  let quoteDisplay = document.getElementById("quoteDisplay");
- let quoteElement = document.createElement("p");
-  quoteElement.textContent = `"${quote.text}" - ${quote.category}`;
-  quoteDisplay.appendChild(quoteElement);
-}
-
-setInterval(syncQuotes, 60000);
 
